@@ -47,6 +47,19 @@ func NewInMemoryDB() *InMemoryDB {
 	}
 }
 
+// Получаем все посты из базы данных
+func (db *InMemoryDB) GetAllPosts() []*Post {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	posts := make([]*Post, 0, len(db.posts))
+	for _, post := range db.posts {
+		posts = append(posts, post)
+	}
+
+	return posts
+}
+
 // Добавляем пост в базу данных
 func (db *InMemoryDB) AddPost(post *Post) {
 	db.mu.Lock()

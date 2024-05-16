@@ -1,0 +1,8 @@
+schema:
+  - schema.graphqls
+exec:
+  package: generated
+  filename: generated.go
+model:
+  package:  generated
+  filename: models_gen.go

@@ -4,9 +4,10 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/your_username/your_project_name/db"
+	"github.com/nasl1s/test/graphql-posts-comments/db"
 )
 
 type Resolver struct {
@@ -21,9 +22,9 @@ func (r *Resolver) Posts(ctx context.Context) ([]*db.Post, error) {
 
 func (r *Resolver) Post(ctx context.Context, id int) (*db.Post, error) {
 	// Вернуть пост с указанным ID из базы данных
-	post, err := r.db.GetPost(id) // Предположим, что у вас есть метод GetPost в вашей InMemoryDB
-	if err != nil {
-		return nil, err
+	post, exists := r.db.GetPost(id)
+	if !exists {
+		return nil, fmt.Errorf("post with ID %d not found", id)
 	}
 	return post, nil
 }
@@ -41,24 +42,32 @@ func (r *Resolver) AddPost(ctx context.Context, title string, content string, au
 }
 
 func (r *Resolver) AddComment(ctx context.Context, content string, authorID int, postID int, parentID *int) (*db.Comment, error) {
+	// Определяем переменную для хранения родительского ID комментария
+	var parentIDValue int
+	if parentID != nil {
+		parentIDValue = *parentID
+	}
+
 	// Добавить новый комментарий в базу данных
 	newComment := &db.Comment{
 		Content:   content,
 		AuthorID:  authorID,
 		PostID:    postID,
-		ParentID:  parentID,
+		ParentID:  parentIDValue, // Используем значение parentIDValue вместо parentID
 		CreatedAt: time.Now(),
 	}
-	r.db.AddComment(newComment) // Предположим, что у вас есть метод AddComment в вашей InMemoryDB
+	r.db.AddComment(newComment)
 	return newComment, nil
 }
 
 func (r *Resolver) Comments(ctx context.Context, obj *db.Post) ([]*db.Comment, error) {
-	// Вернуть комментарии для указанного поста из базы данных
-	comments, err := r.db.GetComments(obj.ID) // Предположим, что у вас есть метод GetComments в вашей InMemoryDB
-	if err != nil {
-		return nil, err
+	// Получаем комментарии для указанного поста из базы данных
+	comments, exists := r.db.GetComments(obj.ID)
+	if !exists {
+		// Если комментарии не существуют, возвращаем пустой срез комментариев и ошибку
+		return []*db.Comment{}, fmt.Errorf("comments not found for post with ID %d", obj.ID)
 	}
+	// Возвращаем комментарии
 	return comments, nil
 }
 
